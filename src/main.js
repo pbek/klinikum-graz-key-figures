@@ -12,6 +12,13 @@ Vue.config.productionTip = false
 // }).$mount('#app')
 
 const firebaseConfig = {
+    apiKey: "AIzaSyBTvL644E8wvtAFm3Y0jIGr-TRr_Ocvno0",
+    authDomain: "kages-controlling.firebaseapp.com",
+    databaseURL: "https://kages-controlling.firebaseio.com",
+    projectId: "kages-controlling",
+    storageBucket: "kages-controlling.appspot.com",
+    messagingSenderId: "633774730098",
+    appId: "1:633774730098:web:b75243d60b5aef9a798beb"
   };
   
 firebase.initializeApp(firebaseConfig);
