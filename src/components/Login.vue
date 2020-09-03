@@ -53,6 +53,25 @@ export default {
         // };
         // ui.start("#firebaseui-auth-container", uiConfig);
         // console.log(uiConfig);
+        // console.log(firebase.auth().currentUser);
+
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .then(() => {
+                console.log("currentUser: ", firebase.auth().currentUser);
+            })
+            .catch(function(error) {
+                // Handle Errors here.
+                console.error(error.message);
+            });
+
+
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                console.log("user changed: ", user);
+            } else {
+                // No user is signed in.
+            }
+        });
     },
     data () {
         return {
@@ -73,14 +92,31 @@ export default {
             this.$refs.form.reset()
         },
         login() {
-            if (this.$refs.form.validate()) {
-                firebase.auth().signInWithEmailAndPassword(this.email, this.password)
-                    .then(() => {
-                        console.log(firebase.auth().currentUser);
-                    }).catch((e) => {
-                        console.error(e.message);
-                    });
+            if (!this.$refs.form.validate()) {
+                return;
             }
+
+            // }
+            // firebase.auth().signInWithCustomToken("AIzaSyBTvL644E8wvtAFm3Y0jIGr-TRr_Ocvno0")
+            //         .then(() => {
+            //             console.log(firebase.auth().currentUser);
+            //         }).catch((e) => {
+            //             console.error(e.message);
+            //         });
+
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => {
+                    firebase.auth().signInWithEmailAndPassword(this.email, this.password)
+                        .then(() => {
+                            console.log(firebase.auth().currentUser);
+                        }).catch((e) => {
+                            console.error(e.message);
+                        });
+                })
+                .catch(function(error) {
+                    // Handle Errors here.
+                    console.error(error.message);
+                });
         }
     }
 }
