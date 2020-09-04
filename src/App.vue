@@ -7,20 +7,12 @@
         clipped
       >
         <v-list dense>
-          <v-list-item link>
+          <v-list-item link v-if="user !== null" @click="logout">
             <v-list-item-action>
-              <v-icon>mdi-view-dashboard</v-icon>
+              <v-icon>mdi-logout</v-icon>
             </v-list-item-action>
             <v-list-item-content>
-              <v-list-item-title>Dashboard</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-          <v-list-item link>
-            <v-list-item-action>
-              <v-icon>mdi-cog</v-icon>
-            </v-list-item-action>
-            <v-list-item-content>
-              <v-list-item-title>Settings</v-list-item-title>
+              <v-list-item-title>Logout</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
         </v-list>
@@ -43,7 +35,8 @@
             align="center"
             justify="center"
           >
-            <Login></Login>
+            <Login v-if="user === null"></Login>
+            <Controlling v-else></Controlling>
           </v-row>
         </v-container>
       </v-main>
@@ -55,17 +48,55 @@
   </v-app>
 </template>
 <script>
- import Login from './components/Login';
+import Login from './components/Login';
+import Controlling from './components/Controlling';
+import firebase from "firebase";
 
 export default {
   name: 'App',
 
   components: {
     Login,
+    Controlling,
   },
 
   data: () => ({
     drawer: null,
+    user: null,
   }),
+
+  mounted() {
+    const that = this;
+
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .then(() => {
+        console.log("currentUser: ", firebase.auth().currentUser);
+        that.user = firebase.auth().currentUser;
+      })
+      .catch(function(error) {
+        // Handle Errors here.
+        console.error(error.message);
+      });
+
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        that.user = user;
+        console.log("main user changed: ", user);
+      } else {
+        that.user = null;
+      }
+    });
+  },
+
+  methods: {
+    logout() {
+      firebase.auth().signOut().then(function() {
+        // Sign-out successful.
+      }, function(error) {
+        // An error happened.
+        console.error(error.message);
+      });
+    }
+  }
 };
 </script>

@@ -1,37 +1,42 @@
 <template>
     <v-container fluid fill-height class="loginOverlay">
         <v-layout flex align-center justify-center>
-        <v-flex xs12 sm4 elevation-6>
-            <v-toolbar class="pt-5 darken-4">
-                <v-toolbar-title class="white--text"><h4>Please login</h4></v-toolbar-title>
-            </v-toolbar>
-            <v-card>
-            <v-card-text class="pt-4">
-                <div>
-                    <v-form v-model="valid" ref="form">
-                    <v-text-field
-                        label="Enter your e-mail address"
-                        v-model="email"
-                        :rules="emailRules"
-                        required
-                    ></v-text-field>
-                    <v-text-field
-                        label="Enter your password"
-                        v-model="password"
-                        min="6"
-                        :type="'password'"
-                        :rules="passwordRules"
-                        counter
-                        required
-                    ></v-text-field>
-                    <v-layout justify-space-between>
-                        <v-btn @click="login" :class=" { 'blue darken-4 white--text' : valid, disabled: !valid }">Login</v-btn>
-                    </v-layout>
-                    </v-form>
-                </div>
-            </v-card-text>
-            </v-card>
-        </v-flex>
+            <v-flex xs12 sm4 elevation-6>
+                <v-toolbar class="pt-5 darken-4">
+                    <v-toolbar-title class="white--text"><h4>Please login</h4></v-toolbar-title>
+                </v-toolbar>
+                <v-card>
+                <v-card-text class="pt-4">
+                    <div>
+                        <v-form v-model="valid" ref="form">
+                        <v-text-field
+                            label="Enter your e-mail address"
+                            v-model="email"
+                            :rules="emailRules"
+                            required
+                            v-on:keyup.enter = "login"
+                        ></v-text-field>
+                        <v-text-field
+                            label="Enter your password"
+                            v-model="password"
+                            min="6"
+                            :type="'password'"
+                            :rules="passwordRules"
+                            counter
+                            required
+                            v-on:keyup.enter = "login"
+                        ></v-text-field>
+                        <v-layout justify-space-between>
+                            <v-btn @click="login" :class=" { 'blue darken-4 white--text' : valid, disabled: !valid }">Login</v-btn>
+                        </v-layout>
+                        </v-form>
+                    </div>
+                </v-card-text>
+                </v-card>
+            </v-flex>
+        </v-layout>
+        <v-layout flex align-center justify-center v-if="showError">
+            <v-alert type="error" dismissible v-model="showError">{{error}}</v-alert>
         </v-layout>
     </v-container>
     <!-- <section id="firebaseui-auth-container">Login</section> -->
@@ -75,16 +80,18 @@ export default {
     },
     data () {
         return {
-        valid: false,
-        password: '',
-        passwordRules: [
-            (v) => !!v || 'Password is required',
-        ],
-        email: '',
-        emailRules: [
-            (v) => !!v || 'E-mail is required',
-            (v) => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || 'E-mail must be valid'
-        ],
+            valid: false,
+            password: '',
+            passwordRules: [
+                (v) => !!v || 'Password is required',
+            ],
+            email: '',
+            emailRules: [
+                (v) => !!v || 'E-mail is required',
+                (v) => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || 'E-mail must be valid'
+            ],
+            showError: false,
+            error: '',
         }
     },
     methods: {
@@ -96,6 +103,8 @@ export default {
                 return;
             }
 
+            const that = this;
+
             // }
             // firebase.auth().signInWithCustomToken("AIzaSyBTvL644E8wvtAFm3Y0jIGr-TRr_Ocvno0")
             //         .then(() => {
@@ -104,19 +113,28 @@ export default {
             //             console.error(e.message);
             //         });
 
-            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            firebase.auth().signInWithEmailAndPassword(this.email, this.password)
                 .then(() => {
-                    firebase.auth().signInWithEmailAndPassword(this.email, this.password)
-                        .then(() => {
-                            console.log(firebase.auth().currentUser);
-                        }).catch((e) => {
-                            console.error(e.message);
-                        });
-                })
-                .catch(function(error) {
-                    // Handle Errors here.
-                    console.error(error.message);
+                    console.log(firebase.auth().currentUser);
+                }).catch((e) => {
+                    that.error = e.message;
+                    that.showError = true;
+                    console.error(e.message);
                 });
+
+            // firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            //     .then(() => {
+            //         firebase.auth().signInWithEmailAndPassword(this.email, this.password)
+            //             .then(() => {
+            //                 console.log(firebase.auth().currentUser);
+            //             }).catch((e) => {
+            //                 console.error(e.message);
+            //             });
+            //     })
+            //     .catch(function(error) {
+            //         // Handle Errors here.
+            //         console.error(error.message);
+            //     });
         }
     }
 }
