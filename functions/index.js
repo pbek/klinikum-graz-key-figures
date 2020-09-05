@@ -15,7 +15,7 @@ app.get('/api/bong', (req, res) => {
     res.set('Cache-Control', 'public, max-age=300, s-maxage=400')
     const date = new Date();
     const hours = (date.getHours() % 12) + 2;  // London is UTC + 1hr;
-    res.json({bongs: 'BONG '.repeat(hours)});
+    res.json({bongs: 'BONG '.repeat(hours), time: date.getTime()});
   });
 
 exports.app = functions.https.onRequest(app);
