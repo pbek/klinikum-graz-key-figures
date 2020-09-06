@@ -45,7 +45,9 @@
           Axios.get( 
             url,
             config
-          ).then(console.log).catch(console.error);
+          ).then((res) => {
+            console.log(res.data);
+          }).catch(console.error);
         }).catch(function(error) {
           // Handle error
           console.error(error);
