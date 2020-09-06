@@ -2,6 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const express = require('express');
 const bearerToken = require('express-bearer-token');
+const ExcelJS = require('exceljs');
 const cors = require('cors');
 const app = express();
 const corsOptions = {
@@ -14,6 +15,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bearerToken());
 app.options('*', cors(corsOptions));
+admin.initializeApp({
+    credential: admin.credential.applicationDefault()
+});
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -24,22 +28,27 @@ app.options('*', cors(corsOptions));
 // });
 
 app.get('/api/bong', (req, res) => {
-    admin.initializeApp({
-        credential: admin.credential.applicationDefault()
-    });
 
-    admin.auth().verifyIdToken(req.token)
-    .then((decodedToken) => {
+    admin.auth().verifyIdToken(req.token || '')
+    .then(async (decodedToken) => {
       let uid = decodedToken.uid;
       // res.set('Cache-Control', 'public, max-age=300, s-maxage=400')
       const date = new Date();
       const hours = (date.getHours() % 12) + 2;  // London is UTC + 1hr;
-      return res.json({bongs: 'BONG '.repeat(hours), time: date.getTime(), token: req.token, uid: uid});
+
+      const workbook = new ExcelJS.Workbook();
+      const filename = "./test.xlsx";
+      await workbook.xlsx.readFile(filename);
+      const value = workbook.worksheets[0].getCell("A1").value;
+  
+      return res.json({bongs: 'BONG '.repeat(hours), time: date.getTime(), token: req.token, uid: uid, value: value});
     }).catch((error) => {
       // Handle error
-      res
+      console.error(error.message);
+
+      return res
         .status(401)
-        .send({ error: 'You are not authorized to make this request' });
+        .send({ error: 'You are not authorized to make this request!' });
     });
 
   });
