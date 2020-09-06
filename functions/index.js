@@ -18,6 +18,7 @@ app.options('*', cors(corsOptions));
 admin.initializeApp({
     credential: admin.credential.applicationDefault()
 });
+const bucket = admin.storage().bucket('default');
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -35,6 +36,16 @@ app.get('/api/bong', (req, res) => {
       // res.set('Cache-Control', 'public, max-age=300, s-maxage=400')
       const date = new Date();
       const hours = (date.getHours() % 12) + 2;  // London is UTC + 1hr;
+
+      const destFilename = 'test-local.xlsx';
+      const options = {
+        // The path to which the file should be downloaded, e.g. "./file.txt"
+        destination: destFilename,
+      };
+
+      // https://medium.com/javascript-in-plain-english/how-to-download-files-from-firebase-storage-in-node-js-d5ffe798728
+      // TODO: file has 0 Byte, get correct file
+      await bucket.file("test.xlsx").download(options);
 
       const workbook = new ExcelJS.Workbook();
       const filename = "./test.xlsx";
