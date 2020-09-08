@@ -16,6 +16,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "express-bearer-token": "^2.4.0",
+    "core-js": "^3.6.5",
+    "regenerator-runtime": "^0.13.7",
     "exceljs": "^4.1.1",
     "cors": "^2.8.5",
     "firebase-admin": "^8.10.0",
