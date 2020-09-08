@@ -1,11 +1,26 @@
 <template>
   <v-container>
-    <v-row class="text-center">
-      <h1>Controlling</h1>
-      {{data}}
-      <v-btn icon click="fetchData">
-        <v-icon>mdi-cached</v-icon>
-      </v-btn>
+    <v-row>
+      <v-card
+        class="mx-auto"
+        max-width="344"
+        outlined
+      >
+        <v-list-item three-line>
+          <v-list-item-content>
+            <div class="overline mb-4">DATA</div>
+            <v-list-item-title class="headline mb-1">Controlling</v-list-item-title>
+            <v-list-item-subtitle>{{data}}</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+    
+        <v-card-actions>
+          <v-btn icon v-on:click="fetchData" title="Reload">
+            <v-icon>mdi-cached</v-icon>
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+
     </v-row>
   </v-container>
 </template>
@@ -18,7 +33,7 @@
     name: 'Controlling',
     data () {
         return {
-            data: {},
+            data: "",
         }
     },
     mounted() {
@@ -38,6 +53,7 @@
       fetchData() {
         console.log("Fetching...");
         const that = this;
+        this.data = "";
 
         firebase.auth().currentUser.getIdToken(true).then(function(idToken) {
           // Send token to your backend via HTTPS
