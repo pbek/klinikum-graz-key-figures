@@ -46,16 +46,20 @@ app.get('/api/data', (req, res) => {
           .send({ error: 'No files were found on the storage!' });
       }
 
-      // download the first file
-      const destFilename = './data.xlsx';
-      const options = {
-        destination: destFilename,
-      };
-      await files[0].download(options);
+      // download the first file as stream
+      const file = files[0];
+      const stream = file.createReadStream()
+        .on('error', function(err) {
+            console.error(`Could not download file '${file.name}': ${err.message}`);
+        })
+        .on('end', function() {
+            // The file is fully downloaded.
+            console.log("End of download!");
+        });
 
-      // open the file
+      // open the file stream
       const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.readFile(destFilename);
+      await workbook.xlsx.read(stream);
       const value = workbook.worksheets[0].getCell("A1").value;
   
       return res.json({bongs: 'BONG '.repeat(hours), time: date.getTime(), token: req.token, uid: uid, value: value, files: files});
