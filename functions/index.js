@@ -34,13 +34,13 @@ app.get('/api/data', (req, res) => {
     admin.auth().verifyIdToken(req.token || '')
     .then(async (decodedToken) => {
       let uid = decodedToken.uid;
-      // res.set('Cache-Control', 'public, max-age=300, s-maxage=400')
+      res.set('Cache-Control', 'public, max-age=5, s-maxage=6')
       const date = new Date();
       const hours = (date.getHours() % 12) + 2;  // London is UTC + 1hr;
 
       // get the list of files on the storage
       const [files] = await bucket.getFiles();
-      if (files.length == 0) {
+      if (files.length === 0) {
         return res
           .status(500)
           .send({ error: 'No files were found on the storage!' });
@@ -49,10 +49,10 @@ app.get('/api/data', (req, res) => {
       // download the first file as stream
       const file = files[0];
       const stream = file.createReadStream()
-        .on('error', function(err) {
+        .on('error', (err) => {
             console.error(`Could not download file '${file.name}': ${err.message}`);
         })
-        .on('end', function() {
+        .on('end', () => {
             // The file is fully downloaded.
             console.log("End of download!");
         });
