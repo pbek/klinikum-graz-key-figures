@@ -16,9 +16,10 @@ app.use(cors(corsOptions));
 app.use(bearerToken());
 app.options('*', cors(corsOptions));
 admin.initializeApp({
-    credential: admin.credential.applicationDefault()
+    credential: admin.credential.applicationDefault(),
+    storageBucket: "kages-controlling.appspot.com"
 });
-const bucket = admin.storage().bucket('default');
+const bucket = admin.storage().bucket();
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -28,7 +29,7 @@ const bucket = admin.storage().bucket('default');
 //   response.send("Hello from Firebase!");
 // });
 
-app.get('/api/bong', (req, res) => {
+app.get('/api/data', (req, res) => {
 
     admin.auth().verifyIdToken(req.token || '')
     .then(async (decodedToken) => {
@@ -37,29 +38,34 @@ app.get('/api/bong', (req, res) => {
       const date = new Date();
       const hours = (date.getHours() % 12) + 2;  // London is UTC + 1hr;
 
-      const destFilename = 'test-local.xlsx';
+      // get the list of files on the storage
+      const [files] = await bucket.getFiles();
+      if (files.length == 0) {
+        return res
+          .status(500)
+          .send({ error: 'No files were found on the storage!' });
+      }
+
+      // download the first file
+      const destFilename = './data.xlsx';
       const options = {
-        // The path to which the file should be downloaded, e.g. "./file.txt"
         destination: destFilename,
       };
+      await files[0].download(options);
 
-      // https://medium.com/javascript-in-plain-english/how-to-download-files-from-firebase-storage-in-node-js-d5ffe798728
-      // TODO: file has 0 Byte, get correct file
-      await bucket.file("test.xlsx").download(options);
-
+      // open the file
       const workbook = new ExcelJS.Workbook();
-      const filename = "./test.xlsx";
-      await workbook.xlsx.readFile(filename);
+      await workbook.xlsx.readFile(destFilename);
       const value = workbook.worksheets[0].getCell("A1").value;
   
-      return res.json({bongs: 'BONG '.repeat(hours), time: date.getTime(), token: req.token, uid: uid, value: value});
+      return res.json({bongs: 'BONG '.repeat(hours), time: date.getTime(), token: req.token, uid: uid, value: value, files: files});
     }).catch((error) => {
       // Handle error
       console.error(error.message);
 
       return res
         .status(401)
-        .send({ error: 'You are not authorized to make this request!' });
+        .send({ error: 'You are not authorized to make this request: ' + error.message });
     });
 
   });
