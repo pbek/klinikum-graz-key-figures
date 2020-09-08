@@ -74,7 +74,7 @@ app.get('/api/data', (req, res) => {
       await workbook.xlsx.read(stream);
       const value = workbook.worksheets[0].getCell("A1").value;
   
-      return res.json({bongs: 'BONG '.repeat(hours), time: date.getTime(), token: req.token, uid: uid, value: value, files: files});
+      return res.json({bongs: 'BONG '.repeat(hours), time: date.getTime(), token: req.token, uid: uid, value: value});
     }).catch((error) => {
       // Handle error
       console.error(error.message);
