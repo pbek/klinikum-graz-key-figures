@@ -23,4 +23,5 @@ pnpm-debug.log*
 *.sw?
 
 # Firebase
-.firebase/*.cache
+.firebase
+.firebase/*.ZGlzdA.cache
