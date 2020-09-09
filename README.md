@@ -1,5 +1,7 @@
 # Kages Controlling
 
+![Node.js CI](https://github.com/pbek/kages-controlling/workflows/Node.js%20CI/badge.svg)
+
 ## Project setup
 
 ```bash
