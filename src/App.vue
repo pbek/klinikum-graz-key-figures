@@ -35,8 +35,8 @@
             align="center"
             justify="center"
           >
-            <Login v-if="user === null"></Login>
-            <Controlling v-else></Controlling>
+            <Login v-if="showLogin"></Login>
+            <Controlling v-if="user !== null"></Controlling>
           </v-row>
         </v-container>
       </v-main>
@@ -63,6 +63,7 @@ export default {
   data: () => ({
     drawer: null,
     user: null,
+    showLogin: false,
   }),
 
   mounted() {
@@ -72,18 +73,23 @@ export default {
       .then(() => {
         console.log("currentUser: ", firebase.auth().currentUser);
         that.user = firebase.auth().currentUser;
+        that.showLogin = false;
       })
       .catch(function(error) {
         // Handle Errors here.
         console.error(error.message);
+        that.user = null;
+        that.showLogin = true;
       });
 
     firebase.auth().onAuthStateChanged(function(user) {
       if (user) {
         that.user = user;
+        that.showLogin = false;
         console.log("main user changed: ", user);
       } else {
         that.user = null;
+        that.showLogin = true;
       }
     });
   },
