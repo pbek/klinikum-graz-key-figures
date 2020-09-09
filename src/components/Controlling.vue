@@ -64,8 +64,9 @@
             headers: { Authorization: `Bearer ${idToken}` }
           };
 
-          const url = "http://localhost:5000/api/data";
+          // const url = "http://localhost:5000/api/data";
           // const url = "https://kages-controlling.web.app/api/data";
+          const url = process.env.VUE_APP_API_URL;
 
           Axios.get( 
             url,
