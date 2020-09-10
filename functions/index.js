@@ -74,13 +74,10 @@ app.get('/api/data', (req, res) => {
         let times = [];
         const timeCol = worksheet.getColumn('F');
         timeCol.eachCell((cell, rowNumber) => {
-          if (rowNumber == 1) {
+          if (rowNumber === 1) {
             return;
           }
 
-          
-
-          // console.log(cell);
           // 1899-12-30T19:00:00.000Z
           const time = moment(cell.value).format("HH:mm").toString();
           
