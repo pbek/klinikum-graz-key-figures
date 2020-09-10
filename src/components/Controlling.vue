@@ -1,26 +1,25 @@
 <template>
   <v-container>
     <v-row>
-      <v-card
+      <v-card-actions>
+        <v-btn icon v-on:click="fetchData" title="Reload">
+          <v-icon>mdi-cached</v-icon>
+        </v-btn>
+      </v-card-actions>
+    </v-row>
+    <v-row>
+      <v-card v-for="dateBlock in data.stats" :key="dateBlock.date"
         class="mx-auto"
-        max-width="344"
         outlined
       >
         <v-list-item three-line>
           <v-list-item-content>
-            <div class="overline mb-4">DATA</div>
+            <div class="overline mb-4">{{dateBlock.date}}</div>
             <v-list-item-title class="headline mb-1">Controlling</v-list-item-title>
-            <v-list-item-subtitle>{{data}}</v-list-item-subtitle>
+            <v-list-item-subtitle>{{dateBlock}}</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
-    
-        <v-card-actions>
-          <v-btn icon v-on:click="fetchData" title="Reload">
-            <v-icon>mdi-cached</v-icon>
-          </v-btn>
-        </v-card-actions>
       </v-card>
-
     </v-row>
   </v-container>
 </template>
@@ -73,7 +72,7 @@
             config
           ).then((res) => {
             console.log(res.data);
-            that.data = res.data.value;
+            that.data = res.data;
           }).catch(console.error);
         }).catch(function(error) {
           // Handle error

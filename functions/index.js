@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const express = require('express');
+const moment = require('moment');
 const bearerToken = require('express-bearer-token');
 // const ExcelJS = require('exceljs');
 
@@ -27,8 +28,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bearerToken());
 app.options('*', cors(corsOptions));
-console.log(process.env);
-// console.log(function.config());
 const config = JSON.parse(process.env.FIREBASE_CONFIG);
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
@@ -67,9 +66,33 @@ app.get('/api/data', (req, res) => {
       // open the file stream
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.read(stream);
-      const value = workbook.worksheets[0].getCell("A1").value;
+      // const value = workbook.worksheets[0].getCell("A1").value;
+
+      let resultData = {stats: {}};
+
+      workbook.worksheets.forEach(worksheet => {
+        let times = [];
+        const timeCol = worksheet.getColumn('F');
+        timeCol.eachCell((cell, rowNumber) => {
+          if (rowNumber == 1) {
+            return;
+          }
+
+          
+
+          // console.log(cell);
+          // 1899-12-30T19:00:00.000Z
+          const time = moment(cell.value).format("HH:mm").toString();
+          
+          if (times.indexOf(time) === -1) {
+            times.push(time);
+          }
+        });
+        resultData.stats[worksheet.name] = {date: worksheet.name, times: times};
+      });
   
-      return res.json({bongs: 'BONG '.repeat(hours), time: date.getTime(), token: req.token, uid: uid, value: value});
+      return res.json(resultData);
+      // return res.json({bongs: 'BONG '.repeat(hours), time: date.getTime(), token: req.token, uid: uid, value: value, test: {test: 123}});
     }).catch((error) => {
       // Handle error
       console.error(error.message);
