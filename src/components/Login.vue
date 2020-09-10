@@ -6,37 +6,37 @@
                     <v-toolbar-title class="white--text"><h4>Please login</h4></v-toolbar-title>
                 </v-toolbar>
                 <v-card>
-                <v-card-text class="pt-4">
-                    <div>
-                        <v-form v-model="valid" ref="form">
-                        <v-text-field
-                            label="Enter your e-mail address"
-                            v-model="email"
-                            :rules="emailRules"
-                            required
-                            v-on:keyup.enter = "login"
-                        ></v-text-field>
-                        <v-text-field
-                            label="Enter your password"
-                            v-model="password"
-                            min="6"
-                            :type="'password'"
-                            :rules="passwordRules"
-                            counter
-                            required
-                            v-on:keyup.enter = "login"
-                        ></v-text-field>
-                        <v-layout justify-space-between>
-                            <v-btn @click="login" :class=" { 'blue darken-4 white--text' : valid, disabled: !valid }">Login</v-btn>
-                        </v-layout>
-                        </v-form>
-                    </div>
-                </v-card-text>
+                    <v-card-text class="pt-4">
+                        <div>
+                            <v-form v-model="valid" ref="form">
+                                <v-text-field
+                                    label="Enter your e-mail address"
+                                    v-model="email"
+                                    :rules="emailRules"
+                                    required
+                                    v-on:keyup.enter = "login"
+                                ></v-text-field>
+                                <v-text-field
+                                    label="Enter your password"
+                                    v-model="password"
+                                    min="6"
+                                    :type="'password'"
+                                    :rules="passwordRules"
+                                    counter
+                                    required
+                                    v-on:keyup.enter = "login"
+                                ></v-text-field>
+                                <v-layout justify-space-between>
+                                    <v-btn @click="login" :class=" { 'blue darken-4 white--text' : valid, disabled: !valid }">Login</v-btn>
+                                </v-layout>
+                            </v-form>
+                        </div>
+                    </v-card-text>
                 </v-card>
+                <v-alert type="error" dismissible v-model="showError">{{error}}</v-alert>
             </v-flex>
         </v-layout>
         <v-layout flex align-center justify-center v-if="showError">
-            <v-alert type="error" dismissible v-model="showError">{{error}}</v-alert>
         </v-layout>
     </v-container>
     <!-- <section id="firebaseui-auth-container">Login</section> -->
