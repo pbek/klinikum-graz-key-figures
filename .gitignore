@@ -25,3 +25,4 @@ pnpm-debug.log*
 # Firebase
 .firebase
 .firebase/*.ZGlzdA.cache
+*.log

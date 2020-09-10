@@ -23,7 +23,7 @@
         clipped-left
       >
         <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-        <v-toolbar-title>Kages Controlling</v-toolbar-title>
+        <v-toolbar-title>{{title}}</v-toolbar-title>
       </v-app-bar>
 
       <v-main>
@@ -61,6 +61,7 @@ export default {
   },
 
   data: () => ({
+    title: process.env.VUE_APP_TITLE,
     drawer: null,
     user: null,
     showLogin: false,

@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "kages-controlling"
+    "production": "kages-controlling",
+    "development": "kages-controlling-dev"
   }
 }

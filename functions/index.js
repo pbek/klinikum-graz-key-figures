@@ -18,7 +18,7 @@ const ExcelJS = require('exceljs/dist/es5');
 const cors = require('cors');
 const app = express();
 const corsOptions = {
-    origin: ['http://localhost:8080', 'https://kages-controlling.web.app'],
+    origin: ['http://localhost:8080', 'http://localhost:8081', 'https://kages-controlling.web.app', 'https://kages-controlling-dev.web.app', 'http://localhost:5000'],
     allowedHeaders: ["Content-Type", "Authorization", "Access-Control-Allow-Methods", "Access-Control-Request-Headers"],
     credentials: true,
     enablePreflight: true
@@ -27,19 +27,14 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bearerToken());
 app.options('*', cors(corsOptions));
+console.log(process.env);
+// console.log(function.config());
+const config = JSON.parse(process.env.FIREBASE_CONFIG);
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
-    storageBucket: "kages-controlling.appspot.com"
+    storageBucket: config.storageBucket
 });
 const bucket = admin.storage().bucket();
-
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
 
 app.get('/api/data', (req, res) => {
 

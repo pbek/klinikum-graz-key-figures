@@ -12,13 +12,13 @@ Vue.config.productionTip = false
 // }).$mount('#app')
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBTvL644E8wvtAFm3Y0jIGr-TRr_Ocvno0",
-    authDomain: "kages-controlling.firebaseapp.com",
+    apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
+    authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
     databaseURL: "https://kages-controlling.firebaseio.com",
-    projectId: "kages-controlling",
-    storageBucket: "kages-controlling.appspot.com",
+    projectId: process.env.VUE_APP_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.VUE_APP_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: "633774730098",
-    appId: "1:633774730098:web:b75243d60b5aef9a798beb"
+    appId: process.env.VUE_APP_FIREBASE_APP_ID
   };
   
 firebase.initializeApp(firebaseConfig);
