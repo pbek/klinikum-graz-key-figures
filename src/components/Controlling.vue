@@ -8,18 +8,32 @@
       </v-card-actions>
     </v-row>
     <v-row>
-      <v-card v-for="dateBlock in data.stats" :key="dateBlock.date"
-        class="mx-auto"
-        outlined
-      >
-        <v-list-item three-line>
-          <v-list-item-content>
-            <div class="overline mb-4">{{dateBlock.date}}</div>
-            <v-list-item-title class="headline mb-1">Controlling</v-list-item-title>
-            <v-list-item-subtitle>{{dateBlock}}</v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
-      </v-card>
+      <v-col
+              v-for="dateBlock in data.stats"
+              :key="dateBlock.date"
+              cols="12"
+              sm="6"
+              md="4"
+              lg="3"
+            >
+        <v-card>
+          <v-card-title class="subheading font-weight-bold">{{ dateBlock.date }}</v-card-title>
+
+          <v-divider></v-divider>
+
+          <v-list dense>
+            <v-list-item>
+              <v-list-item-content>Info 1:</v-list-item-content>
+              <v-list-item-content class="align-end">{{ dateBlock }}</v-list-item-content>
+            </v-list-item>
+
+            <v-list-item>
+              <v-list-item-content>Info 2:</v-list-item-content>
+              <v-list-item-content class="align-end">xxx</v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-card>
+      </v-col>
     </v-row>
   </v-container>
 </template>
