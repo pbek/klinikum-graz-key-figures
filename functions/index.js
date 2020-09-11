@@ -72,7 +72,9 @@ app.get('/api/data', (req, res) => {
 
       workbook.worksheets.forEach(worksheet => {
         let times = [];
+        let timesData = {};
         const timeCol = worksheet.getColumn('F');
+
         timeCol.eachCell((cell, rowNumber) => {
           if (rowNumber === 1) {
             return;
@@ -80,12 +82,23 @@ app.get('/api/data', (req, res) => {
 
           // 1899-12-30T19:00:00.000Z
           const time = moment(cell.value).format("HH:mm").toString();
-          
+          const row = worksheet.getRow(rowNumber);
+          const bedsFullValue = row.getCell('M').value;
+          const bedsEmptyValue = row.getCell('N').value;
+
+          if (timesData[time] === undefined) {
+            timesData[time] = {dateTime: worksheet.name + ' ' + time, time: time, bedsFull: 0, bedsEmpty: 0};
+          }
+
+          timesData[time]['bedsFull'] += bedsFullValue.result || (Number.isInteger(bedsFullValue) ? bedsFullValue : 0);
+          timesData[time]['bedsEmpty'] += bedsEmptyValue.result || (Number.isInteger(bedsEmptyValue) ? bedsEmptyValue : 0);
+
           if (times.indexOf(time) === -1) {
             times.push(time);
           }
         });
-        resultData.stats[worksheet.name] = {date: worksheet.name, times: times};
+
+        resultData.stats[worksheet.name] = {date: worksheet.name, times: times, timesData: timesData};
       });
   
       return res.json(resultData);
