@@ -82,6 +82,12 @@ app.get('/api/data', (req, res) => {
 
           // 1899-12-30T19:00:00.000Z
           const time = moment(cell.value).format("HH:mm").toString();
+
+          // only need 7:00 right now
+          if (time !== '07:00') {
+            return;
+          }
+
           const row = worksheet.getRow(rowNumber);
           const bedsFullValue = row.getCell('M').value;
           const bedsEmptyValue = row.getCell('N').value;
