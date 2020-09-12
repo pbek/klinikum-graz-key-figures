@@ -12,34 +12,46 @@
         v-if="!data"
         indeterminate
       ></v-progress-linear>
-      <template v-for="dateBlock in data.stats">
+      <template v-if="data">
         <v-col
-                v-for="timeBlock in dateBlock.timesData"
+                v-for="timeBlock in data.stats[Object.keys(data.stats)[0]].timesData"
                 :key="timeBlock.dateTime"
                 cols="12"
-                sm="6"
-                md="4"
-                lg="3"
               >
           <v-card>
-            <v-card-title class="subheading font-weight-bold">{{ dateBlock.date }} {{ timeBlock.time }}</v-card-title>
+            <v-card-title class="subheading font-weight-bold">
+              {{ data.stats[Object.keys(data.stats)[0]].date }} {{ timeBlock.time }} - Belegung
+            </v-card-title>
 
             <v-divider></v-divider>
 
             <v-list dense>
+              <v-list-item class="small">
+                <v-list-item-content></v-list-item-content>
+                <v-list-item-content v-for="(dateBlock, date) in data.stats" v-bind:key="date" class="font-weight-bold">
+                  {{ dateBlock.date }}
+                </v-list-item-content>
+              </v-list-item>
+
               <v-list-item>
                 <v-list-item-content>Betten belegt</v-list-item-content>
-                <v-list-item-content class="align-end">{{ timeBlock.bedsFull }}</v-list-item-content>
+                <v-list-item-content v-for="(dateBlock, date) in data.stats" v-bind:key="date">
+                  {{ dateBlock.timesData['07:00'].bedsFull }}
+                </v-list-item-content>
               </v-list-item>
 
               <v-list-item>
                 <v-list-item-content>Betten frei</v-list-item-content>
-                <v-list-item-content class="align-end">{{ timeBlock.bedsEmpty }}</v-list-item-content>
+                <v-list-item-content v-for="(dateBlock, date) in data.stats" v-bind:key="date">
+                  {{ dateBlock.timesData['07:00'].bedsEmpty }}
+                </v-list-item-content>
               </v-list-item>
 
               <v-list-item class="small">
                 <v-list-item-content>Tats. Betten Gesamt</v-list-item-content>
-                <v-list-item-content class="align-end">{{ timeBlock.bedsFull + timeBlock.bedsEmpty }}</v-list-item-content>
+                <v-list-item-content v-for="(dateBlock, date) in data.stats" v-bind:key="date">
+                  {{ dateBlock.timesData['07:00'].bedsFull + dateBlock.timesData['07:00'].bedsEmpty }}
+                </v-list-item-content>
               </v-list-item>
             </v-list>
           </v-card>

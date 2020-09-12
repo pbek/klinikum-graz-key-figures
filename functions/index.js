@@ -70,7 +70,7 @@ app.get('/api/data', (req, res) => {
 
       let resultData = {stats: {}};
 
-      workbook.worksheets.forEach(worksheet => {
+      workbook.worksheets.reverse().forEach(worksheet => {
         let times = [];
         let timesData = {};
         const timeCol = worksheet.getColumn('F');
