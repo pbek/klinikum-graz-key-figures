@@ -1,6 +1,6 @@
 module.exports = {
   pwa: {
-    name: 'Kages Controlling',
+    name: 'Klinikum Graz Kennzahlen',
   },
   "transpileDependencies": [
     "vuetify"
