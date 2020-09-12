@@ -20,40 +20,41 @@
               >
           <v-card>
             <v-card-title class="subheading font-weight-bold">
-              {{ data.stats[Object.keys(data.stats)[0]].date }} {{ timeBlock.time }} - Belegung
+              {{ data.stats[Object.keys(data.stats)[0]].date }} {{ timeBlock.time }} | Belegung
             </v-card-title>
 
             <v-divider></v-divider>
 
-            <v-list dense>
-              <v-list-item class="small">
-                <v-list-item-content></v-list-item-content>
-                <v-list-item-content v-for="(dateBlock, date) in data.stats" v-bind:key="date" class="font-weight-bold">
-                  {{ dateBlock.date }}
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item>
-                <v-list-item-content>Betten belegt</v-list-item-content>
-                <v-list-item-content v-for="(dateBlock, date) in data.stats" v-bind:key="date">
-                  {{ dateBlock.timesData['07:00'].bedsFull }}
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item>
-                <v-list-item-content>Betten frei</v-list-item-content>
-                <v-list-item-content v-for="(dateBlock, date) in data.stats" v-bind:key="date">
-                  {{ dateBlock.timesData['07:00'].bedsEmpty }}
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item class="small">
-                <v-list-item-content>Tats. Betten Gesamt</v-list-item-content>
-                <v-list-item-content v-for="(dateBlock, date) in data.stats" v-bind:key="date">
-                  {{ dateBlock.timesData['07:00'].bedsFull + dateBlock.timesData['07:00'].bedsEmpty }}
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
+            <v-simple-table dense>
+              <template v-slot:default>
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th v-for="(dateBlock, date) in data.stats" v-bind:key="date" class="text-left">{{ dateBlock.date }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Betten belegt</td>
+                    <td v-for="(dateBlock, date) in data.stats" v-bind:key="date">
+                      {{ dateBlock.timesData['07:00'].bedsFull }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Betten frei</td>
+                    <td v-for="(dateBlock, date) in data.stats" v-bind:key="date">
+                      {{ dateBlock.timesData['07:00'].bedsEmpty }}
+                    </td>
+                  </tr>
+                  <tr class="small">
+                    <td>Tats. Betten Gesamt</td>
+                    <td v-for="(dateBlock, date) in data.stats" v-bind:key="date">
+                      {{ dateBlock.timesData['07:00'].bedsFull + dateBlock.timesData['07:00'].bedsEmpty }}
+                    </td>
+                  </tr>
+                </tbody>
+              </template>
+            </v-simple-table>
           </v-card>
         </v-col>
       </template>
@@ -121,7 +122,7 @@
   }
 </script>
 <style scoped>
-  .small {
+  .small, .v-data-table > .v-data-table__wrapper > table > tbody > tr.small > td {
     font-size: 0.8em;
   }
 </style>
