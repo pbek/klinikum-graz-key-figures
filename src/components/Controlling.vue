@@ -13,6 +13,22 @@
         indeterminate
       ></v-progress-linear>
       <template v-if="data">
+        <v-col cols="6">
+          <v-autocomplete
+            label="OE Fach"
+            v-model="filterValue1"
+            :items="filter1"
+            clearable
+          ></v-autocomplete>
+        </v-col>
+        <v-col cols="6">
+          <v-autocomplete
+            label="Fachliche OE"
+            :value="filterValue2"
+            :items="filter2"
+            clearable
+          ></v-autocomplete>
+        </v-col>
         <v-col
                 v-for="timeBlock in data.stats[Object.keys(data.stats)[0]].timesData"
                 :key="timeBlock.dateTime"
@@ -77,7 +93,33 @@
             data: false,
             dates: [],
             percentages: [],
+            filter1: [
+              {"text" :"OE Fach 1", "value": "OE1"},
+              {"text" :"OE Fach 2", "value": "OE2"},
+            ],
+            filterValue1: "",
+            filter2: [],
+            filterValue2: "",
         }
+    },
+    watch: {
+      filterValue1(val) {
+        if (val === "OE1") {
+          this.filter2 = [
+              {"text" :"OE Sub Fach 1a", "value": "OE1a"},
+              {"text" :"OE Sub Fach 1b", "value": "OE1b"},
+            ]
+        } else if (val === "OE2") {
+          this.filter2 = [
+              {"text" :"OE Sub Fach 2a", "value": "OE2a"},
+              {"text" :"OE Sub Fach 2b", "value": "OE2b"},
+            ]
+        } else {
+          this.filter2 = []
+        }
+
+        this.filterValue2 = "";
+      }
     },
     mounted() {
       const that = this;
@@ -99,10 +141,6 @@
         this.data = "";
 
         firebase.auth().currentUser.getIdToken(true).then(function(idToken) {
-          // Send token to your backend via HTTPS
-          // ...
-          console.log("idToken: " + idToken);
-
           const config = {
             headers: { Authorization: `Bearer ${idToken}` }
           };
