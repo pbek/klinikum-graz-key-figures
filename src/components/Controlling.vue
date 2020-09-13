@@ -44,7 +44,21 @@
                   </tr>
                 </tbody>
               </template>
-            </v-simple-table>
+              </v-simple-table>
+              <v-row align="center" justify="center">
+                <v-col cols="12" style="max-width: 420px">
+                  <v-sparkline
+                    :labels="dates"
+                    :value="percentages"
+                    color="rgba(255, 255, 255, .7)"
+                    stroke-linecap="round"
+                    smooth
+                    auto-draw
+                    :gradient="['#f72047', '#ffd200', '#1feaea']"
+                  >
+                </v-sparkline>
+              </v-col>
+            </v-row>
           </v-card>
         </v-col>
       </template>
@@ -61,6 +75,8 @@
     data () {
         return {
             data: false,
+            dates: [],
+            percentages: [],
         }
     },
     mounted() {
@@ -101,6 +117,20 @@
           ).then((res) => {
             console.log(res.data);
             that.data = res.data;
+            const stats = that.data.stats;
+            that.dates = [];
+            that.percentages = [];
+
+            for (let date in stats) {
+              that.dates.push(date);
+              const bedsFull = stats[date].timesData['07:00'].bedsFull;
+              const bedsEmpty = stats[date].timesData['07:00'].bedsEmpty;
+              const bedsTotal = bedsFull + bedsEmpty;
+              that.percentages.push(bedsFull * 100 / bedsTotal);
+            }
+
+            that.dates.reverse();
+            that.percentages.reverse();
           }).catch(console.error);
         }).catch(function(error) {
           // Handle error
