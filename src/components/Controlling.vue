@@ -20,7 +20,7 @@
               >
           <v-card>
             <v-card-title class="subheading font-weight-bold">
-              {{ data.stats[Object.keys(data.stats)[0]].date }} {{ timeBlock.time }} | Belegung
+              Belegung um {{ timeBlock.time }}
             </v-card-title>
 
             <v-divider></v-divider>
@@ -30,27 +30,17 @@
                 <thead>
                   <tr>
                     <th></th>
-                    <th v-for="(dateBlock, date) in data.stats" v-bind:key="date" class="text-left">{{ dateBlock.date }}</th>
+                    <th class="text-left">Betten belegt</th>
+                    <th class="text-left">Betten frei</th>
+                    <th class="text-left gray">Tats. Betten Gesamt</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>Betten belegt</td>
-                    <td v-for="(dateBlock, date) in data.stats" v-bind:key="date">
-                      {{ dateBlock.timesData['07:00'].bedsFull }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Betten frei</td>
-                    <td v-for="(dateBlock, date) in data.stats" v-bind:key="date">
-                      {{ dateBlock.timesData['07:00'].bedsEmpty }}
-                    </td>
-                  </tr>
-                  <tr class="small">
-                    <td>Tats. Betten Gesamt</td>
-                    <td v-for="(dateBlock, date) in data.stats" v-bind:key="date">
-                      {{ dateBlock.timesData['07:00'].bedsFull + dateBlock.timesData['07:00'].bedsEmpty }}
-                    </td>
+                  <tr v-for="(dateBlock, date) in data.stats" v-bind:key="date">
+                    <td>{{ dateBlock.date }}</td>
+                    <td>{{ dateBlock.timesData['07:00'].bedsFull }}</td>
+                    <td>{{ dateBlock.timesData['07:00'].bedsEmpty }}</td>
+                    <td class="gray">{{ dateBlock.timesData['07:00'].bedsFull + dateBlock.timesData['07:00'].bedsEmpty }}</td>
                   </tr>
                 </tbody>
               </template>
@@ -122,7 +112,13 @@
   }
 </script>
 <style scoped>
-  .small, .v-data-table > .v-data-table__wrapper > table > tbody > tr.small > td {
+  .small,
+  .v-data-table > .v-data-table__wrapper > table > tbody > tr.small > td,
+  .v-data-table > .v-data-table__wrapper > table > tbody > tr > td.small {
     font-size: 0.8em;
+  }
+
+  .gray, .theme--dark.v-data-table > .v-data-table__wrapper > table > thead > tr > th.gray {
+    color: gray;
   }
 </style>
