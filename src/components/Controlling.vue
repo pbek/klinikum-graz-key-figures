@@ -15,7 +15,7 @@
       <template v-if="data">
         <v-col cols="6">
           <v-autocomplete
-            label="OE Fach"
+            label="Klinik"
             v-model="filterValue1"
             :items="filter1"
             clearable
@@ -23,7 +23,7 @@
         </v-col>
         <v-col cols="6">
           <v-autocomplete
-            label="Fachliche OE"
+            label="Klinische Abteilung"
             :value="filterValue2"
             :items="filter2"
             clearable
