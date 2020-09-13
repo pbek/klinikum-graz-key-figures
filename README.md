@@ -4,6 +4,14 @@
 
 ## Project setup
 
+### Install dev & build tools
+
+```bash
+npm install -g firebase-tools @vue/cli
+```
+
+### Install dependencies
+
 ```bash
 npm install
 ```
@@ -12,18 +20,19 @@ npm install
 
 ```bash
 npm run serve
+npm run serve-firebase
 ```
 
-### Compiles and minifies for production
+### Builds and deploys to development project
 
 ```bash
-npm run build
+npm run deploy-dev
 ```
 
-### Builds and deploys to production
+### Builds and deploys to production project
 
 ```bash
-npm run deploy
+npm run deploy-prod
 ```
 
 ### Lints and fixes files
@@ -31,7 +40,3 @@ npm run deploy
 ```bash
 npm run lint
 ```
-
-### Customize configuration
-
-See [Configuration Reference](https://cli.vuejs.org/config/).
