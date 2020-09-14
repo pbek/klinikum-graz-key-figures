@@ -140,6 +140,13 @@
         const that = this;
         this.data = "";
 
+        var db = firebase.firestore();
+        db.collection("KeyFigures").get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                console.log(`${doc.id} => ${doc.data()}`);
+            });
+        });
+
         firebase.auth().currentUser.getIdToken(true).then(function(idToken) {
           const config = {
             headers: { Authorization: `Bearer ${idToken}` }

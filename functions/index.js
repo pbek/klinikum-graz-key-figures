@@ -70,6 +70,13 @@ app.get('/api/data', (req, res) => {
 
       let resultData = {stats: {}};
 
+      // asyncArrayForEach(workbook.worksheets, (value) => {
+      //   console.log(value);
+      // })
+
+      // const worksheets = workbook.worksheets;
+      // console.log(worksheets.length);
+
       workbook.worksheets.reverse().forEach(worksheet => {
         let times = [];
         let timesData = {};
@@ -91,6 +98,12 @@ app.get('/api/data', (req, res) => {
           const row = worksheet.getRow(rowNumber);
           const bedsFullValue = row.getCell('M').value;
           const bedsEmptyValue = row.getCell('N').value;
+          const date = row.getCell('E').value;
+          // let dateTime = moment(date + ' ' + time, 'DD-MM-YYYY hh:mm');
+          // if (!dateTime.isValid()) {
+          //   dateTime = moment(date);
+          // }
+          // const timestamp = new admin.firestore.Timestamp(dateTime.unix(), 0);
 
           if (timesData[time] === undefined) {
             timesData[time] = {dateTime: worksheet.name + ' ' + time, time: time, bedsFull: 0, bedsEmpty: 0};
@@ -121,3 +134,97 @@ app.get('/api/data', (req, res) => {
   });
 
 exports.app = functions.https.onRequest(app);
+
+const db = admin.firestore();
+
+exports.importKeyFigures = functions.storage.object().onFinalize(async (object) => {
+  const contentType = object.contentType; // File content type.
+  const filePath = object.name;
+
+  if (!contentType.startsWith('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+    console.warning(filePath + ' is not an XLSX spreadsheet file!')
+
+    return;
+  }
+
+  const fileBucket = object.bucket;
+  const bucket = admin.storage().bucket(fileBucket);
+
+  const stream = bucket.file(filePath).createReadStream()
+  .on('error', (err) => {
+      console.error(`Could not create stream for file '${filePath}': ${err.message}`);
+  })
+  .on('end', () => {
+      // The file is fully downloaded.
+      console.log(`Stream of '${filePath}' was read!`);
+  });
+
+  // open the file stream
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.read(stream);
+  let importCount = 0;
+
+  workbook.worksheets.forEach(worksheet => {
+  // asyncArrayForEach(workbook.worksheets, worksheet => {
+  // const worksheets = await workbook.worksheets;
+  // console.log(worksheets.length);
+  // for (let index = 0; index < worksheets.length; index++) {
+  //   const worksheet = worksheets[index];
+    const timeCol = worksheet.getColumn('F');
+
+    timeCol.eachCell((cell, rowNumber) => {
+      if (rowNumber === 1) {
+        return;
+      }
+
+      // 1899-12-30T19:00:00.000Z
+      const time = moment(cell.value).format("HH:mm").toString();
+
+      // only need 7:00 right now
+      if (time !== '07:00') {
+        return;
+      }
+
+      const row = worksheet.getRow(rowNumber);
+      const orgEntity = row.getCell('A').value;
+      const subOrgEntity = row.getCell('B').value;
+      let bedsFullValue = row.getCell('M').value;
+      let bedsEmptyValue = row.getCell('N').value;
+      const date = row.getCell('E').value;
+      // usually the date in cell E is a string
+      let dateTime = moment(date + ' ' + time, 'DD-MM-YYYY hh:mm');
+      // sometime the date in cell E is a datetime
+      if (!dateTime.isValid()) {
+        dateTime = moment(date);
+      }
+      const timestamp = new admin.firestore.Timestamp(dateTime.unix(), 0);
+      bedsFullValue = bedsFullValue.result || (Number.isInteger(bedsFullValue) ? bedsFullValue : 0);
+      bedsEmpty = bedsEmptyValue.result || (Number.isInteger(bedsEmptyValue) ? bedsEmptyValue : 0);
+      const dateString = dateTime.format('YYYY-MM-DD').toString();
+
+      const data = {
+        orgEntity: orgEntity,
+        subOrgEntity: subOrgEntity,
+        bedsFullValue: bedsFullValue,
+        bedsEmpty: bedsEmptyValue,
+        bedsTotal: bedsFullValue + bedsEmptyValue,
+        dateTime: timestamp,
+        dateString: dateString,
+        created: admin.firestore.FieldValue.serverTimestamp()
+      };
+    
+      const docName = dateString + '-' + orgEntity + '-' + subOrgEntity;
+      db.collection('KeyFigures').doc(docName).set(data);
+      console.log(`Created doc '${docName}'`);
+      importCount++;
+    });
+
+    // console.log(`Imported worksheet ${worksheet.name()} of '${filePath}' with ${importCount} key figures`);
+  });
+});
+
+// async function asyncArrayForEach(array, callback) {
+//   for (let index = 0; index < array.length; index++) {
+//       await callback(array[index], index, array);
+//   }
+// }
