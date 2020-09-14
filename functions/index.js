@@ -199,13 +199,13 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
       }
       const timestamp = new admin.firestore.Timestamp(dateTime.unix(), 0);
       bedsFullValue = bedsFullValue.result || (Number.isInteger(bedsFullValue) ? bedsFullValue : 0);
-      bedsEmpty = bedsEmptyValue.result || (Number.isInteger(bedsEmptyValue) ? bedsEmptyValue : 0);
+      bedsEmptyValue = bedsEmptyValue.result || (Number.isInteger(bedsEmptyValue) ? bedsEmptyValue : 0);
       const dateString = dateTime.format('YYYY-MM-DD').toString();
 
       const data = {
         orgEntity: orgEntity,
         subOrgEntity: subOrgEntity,
-        bedsFullValue: bedsFullValue,
+        bedsFull: bedsFullValue,
         bedsEmpty: bedsEmptyValue,
         bedsTotal: bedsFullValue + bedsEmptyValue,
         dateTime: timestamp,
