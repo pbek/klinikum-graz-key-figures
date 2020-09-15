@@ -9,10 +9,10 @@
     </v-row> -->
     <v-row>
       <v-progress-linear
-        v-if="!data"
+        v-if="!stats"
         indeterminate
       ></v-progress-linear>
-      <template v-if="data">
+      <template v-if="stats">
         <v-col cols="6">
           <v-autocomplete
             label="Klinik"
@@ -29,14 +29,10 @@
             clearable
           ></v-autocomplete>
         </v-col>
-        <v-col
-                v-for="timeBlock in data.stats[Object.keys(data.stats)[0]].timesData"
-                :key="timeBlock.dateTime"
-                cols="12"
-              >
+        <v-col cols="12">
           <v-card>
             <v-card-title class="subheading font-weight-bold">
-              Belegung um {{ timeBlock.time }}
+              Belegung um 7:00
             </v-card-title>
 
             <v-divider></v-divider>
@@ -52,11 +48,11 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(dateBlock, date) in data.stats" v-bind:key="date">
-                    <td>{{ dateBlock.date }}</td>
-                    <td>{{ dateBlock.timesData['07:00'].bedsFull }}</td>
-                    <td>{{ dateBlock.timesData['07:00'].bedsEmpty }}</td>
-                    <td class="gray">{{ dateBlock.timesData['07:00'].bedsFull + dateBlock.timesData['07:00'].bedsEmpty }}</td>
+                  <tr v-for="(dateBlock, date) in stats" v-bind:key="date">
+                    <td>{{ date }}</td>
+                    <td>{{ dateBlock.bedsFull }}</td>
+                    <td>{{ dateBlock.bedsEmpty }}</td>
+                    <td class="gray">{{ dateBlock.bedsTotal }}</td>
                   </tr>
                 </tbody>
               </template>
@@ -84,13 +80,13 @@
 
 <script>
   import firebase from "firebase";
-  import Axios from "axios";
+  import moment from "moment";
 
   export default {
     name: 'Controlling',
     data () {
         return {
-            data: false,
+            stats: false,
             dates: [],
             percentages: [],
             filter1: [
@@ -135,53 +131,46 @@
       });
     },
     methods: {
-      fetchData() {
+      async fetchData() {
         console.log("Fetching...");
-        const that = this;
-        this.data = "";
+        let statData = {};
+        this.stats = "";
 
-        var db = firebase.firestore();
-        db.collection("KeyFigures").get().then((querySnapshot) => {
+        const db = firebase.firestore();
+        const keyFiguresRef = db.collection("KeyFigures");
+        let dayOffset = 0;
+        let maxDayOffset = 5; // only allow a maximum of 5 days to be found
+
+        do {
+          let date = moment();
+          date = date.subtract(dayOffset, "days");
+          const dateString = date.format("YYYY-MM-DD");
+          let foundDay = false;
+
+          await keyFiguresRef.where("dateString", "==", dateString).get().then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
-                console.log(`${doc.id} => ${doc.data()}`);
+              if (!foundDay) {
+                maxDayOffset--;
+                foundDay = true;
+              }
+
+              if (statData[dateString] === undefined) {
+                statData[dateString] = {"bedsFull": 0, "bedsEmpty": 0, "bedsTotal": 0};
+              }
+
+              const data = doc.data();
+              statData[dateString].bedsFull += data.bedsFull;
+              statData[dateString].bedsEmpty += data.bedsEmpty;
+              statData[dateString].bedsTotal += data.bedsTotal;
+              statData[dateString].bedsPercent += data.bedsTotal;
             });
-        });
+          });
 
-        firebase.auth().currentUser.getIdToken(true).then(function(idToken) {
-          const config = {
-            headers: { Authorization: `Bearer ${idToken}` }
-          };
+          dayOffset++;
+        } while (maxDayOffset > 0 && dayOffset < 100);
 
-          // const url = "http://localhost:5000/api/data";
-          // const url = "https://kages-controlling.web.app/api/data";
-          const url = process.env.VUE_APP_API_URL;
-
-          Axios.get( 
-            url,
-            config
-          ).then((res) => {
-            console.log(res.data);
-            that.data = res.data;
-            const stats = that.data.stats;
-            that.dates = [];
-            that.percentages = [];
-
-            for (let date in stats) {
-              that.dates.push(date);
-              const bedsFull = stats[date].timesData['07:00'].bedsFull;
-              const bedsEmpty = stats[date].timesData['07:00'].bedsEmpty;
-              const bedsTotal = bedsFull + bedsEmpty;
-              that.percentages.push(bedsFull * 100 / bedsTotal);
-            }
-
-            that.dates.reverse();
-            that.percentages.reverse();
-          }).catch(console.error);
-        }).catch(function(error) {
-          // Handle error
-          console.error(error);
-        });
-
+        console.log(statData);
+        this.stats = statData;
       }
     }
   }
