@@ -49,7 +49,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="(dateBlock, date) in stats" v-bind:key="date">
-                    <td>{{ date }}</td>
+                    <td>{{ dateBlock.dateFormatted }}</td>
                     <td>{{ dateBlock.bedsFull }}</td>
                     <td>{{ dateBlock.bedsEmpty }}</td>
                     <td class="gray">{{ dateBlock.bedsTotal }}</td>
@@ -135,7 +135,9 @@
         console.log("Fetching...");
         let statData = {};
         this.stats = "";
-
+        this.dates = [];
+        this.percentages = [];
+        const that = this;
         const db = firebase.firestore();
         const keyFiguresRef = db.collection("KeyFigures");
         let dayOffset = 0;
@@ -155,16 +157,27 @@
               }
 
               if (statData[dateString] === undefined) {
-                statData[dateString] = {"bedsFull": 0, "bedsEmpty": 0, "bedsTotal": 0};
+                statData[dateString] = {
+                  "date": date,
+                  "dateFormatted": date.format("DD.MM."),
+                  "bedsFull": 0,
+                  "bedsEmpty": 0,
+                  "bedsTotal": 0
+                };
               }
 
               const data = doc.data();
               statData[dateString].bedsFull += data.bedsFull;
               statData[dateString].bedsEmpty += data.bedsEmpty;
               statData[dateString].bedsTotal += data.bedsTotal;
-              statData[dateString].bedsPercent += data.bedsTotal;
             });
           });
+
+          if (statData[dateString] !== undefined) {
+            statData[dateString].bedsPercent = statData[dateString].bedsFull * 100 / statData[dateString].bedsTotal;
+            that.dates.push(statData[dateString].dateFormatted);
+            that.percentages.push(statData[dateString].bedsPercent);
+          }
 
           dayOffset++;
         } while (maxDayOffset > 0 && dayOffset < 100);
