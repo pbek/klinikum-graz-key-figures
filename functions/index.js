@@ -162,16 +162,22 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
   // open the file stream
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.read(stream);
-  let importCount = 0;
 
-  workbook.worksheets.forEach(worksheet => {
+  await asyncForEach(workbook.worksheets, async worksheet => {
+  // await workbook.worksheets.forEach(async worksheet => {
   // asyncArrayForEach(workbook.worksheets, worksheet => {
   // const worksheets = await workbook.worksheets;
   // console.log(worksheets.length);
   // for (let index = 0; index < worksheets.length; index++) {
   //   const worksheet = worksheets[index];
+    const worksheetName = worksheet.name;
+    let importCount = 0;
     const timeCol = worksheet.getColumn('F');
+    const batch = db.batch();
+    // console.log(`Reading worksheet ${worksheetName}`);
+    let dataList = [];
 
+    // beware of forEach in eachCell that doesn't work async!
     timeCol.eachCell((cell, rowNumber) => {
       if (rowNumber === 1) {
         return;
@@ -188,6 +194,7 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
       const row = worksheet.getRow(rowNumber);
       const orgEntity = row.getCell('A').value;
       const subOrgEntity = row.getCell('B').value;
+      const subSubOrgEntity = row.getCell('C').value;
       let bedsFullValue = row.getCell('M').value;
       let bedsEmptyValue = row.getCell('N').value;
       const date = row.getCell('E').value;
@@ -197,7 +204,7 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
       if (!dateTime.isValid()) {
         dateTime = moment(date);
       }
-      const timestamp = new admin.firestore.Timestamp(dateTime.unix(), 0);
+      // const timestamp = new admin.firestore.Timestamp(dateTime.unix(), 0);
       bedsFullValue = bedsFullValue.result || (Number.isInteger(bedsFullValue) ? bedsFullValue : 0);
       bedsEmptyValue = bedsEmptyValue.result || (Number.isInteger(bedsEmptyValue) ? bedsEmptyValue : 0);
       const dateString = dateTime.format('YYYY-MM-DD').toString();
@@ -205,21 +212,45 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
       const data = {
         orgEntity: orgEntity,
         subOrgEntity: subOrgEntity,
+        subSubOrgEntity: subSubOrgEntity,
         bedsFull: bedsFullValue,
         bedsEmpty: bedsEmptyValue,
         bedsTotal: bedsFullValue + bedsEmptyValue,
-        dateTime: timestamp,
+        // dateTime: timestamp,
         dateString: dateString,
-        created: admin.firestore.FieldValue.serverTimestamp()
+        // created: admin.firestore.FieldValue.serverTimestamp()
       };
     
-      const docName = dateString + '-' + orgEntity + '-' + subOrgEntity;
-      db.collection('KeyFigures').doc(docName).set(data);
-      console.log(`Created doc '${docName}'`);
+      const docName = data.dateString + '-' + data.orgEntity + '-' + data.subOrgEntity + '-' + data.subSubOrgEntity;
+      let docRef = db.collection('KeyFigures').doc(docName);
+      // await db.collection('KeyFigures').doc(docName).set(data);
+      
       importCount++;
+      batch.set(docRef, data);
+      dataList.push(`${worksheetName} ${rowNumber}`);
+      // dataList.push(data);
+      // console.log(`Set worksheet ${worksheetName}, row ${rowNumber}`);
     });
 
-    // console.log(`Imported worksheet ${worksheet.name()} of '${filePath}' with ${importCount} key figures`);
+    // console.log(`Imported worksheet ${worksheetName} of '${filePath}' with ${importCount} key figures`);
+    // console.log(dataList.length, dataList);
+
+    // for (let index = 0; index < dataList.length; index++) {
+    //   const data = dataList[index];
+    //   const docName = data.dateString + '-' + data.orgEntity + '-' + data.subOrgEntity + '-' + data.subSubOrgEntity;
+    //   // await db.collection('KeyFigures').doc(docName).set(data);
+    //   let docRef = db.collection('KeyFigures').doc(docName);
+    //   batch.set(docRef, data);
+    // }
+  
+    // await batch.commit().then(() => {
+    //   return console.log(`Imported worksheet ${worksheetName} of '${filePath}' with ${importCount} key figures`);
+    // }).catch((e) => {
+    //   return console.error(e);
+    // });
+
+    await batch.commit();
+    console.log(`Imported worksheet ${worksheetName} of '${filePath}' with ${importCount} key figures`);
   });
 });
 
@@ -228,3 +259,9 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
 //       await callback(array[index], index, array);
 //   }
 // }
+
+async function asyncForEach(array, callback) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+}
