@@ -24,7 +24,7 @@
         <v-col cols="6">
           <v-autocomplete
             label="Klinische Abteilung"
-            :value="filterValue2"
+            v-model="filterValue2"
             :items="filter2"
             clearable
           ></v-autocomplete>
@@ -91,15 +91,24 @@
             dates: [],
             percentages: [],
             filter1: utils.getFilter1Mapping(),
-            filterValue1: "",
+            filterValue1: undefined,
             filter2: [],
-            filterValue2: "",
+            filterValue2: undefined,
         }
     },
     watch: {
       filterValue1(val) {
         // val is undefined if filter 1 isn't selected
         this.filter2 = utils.getFilter2Mapping(val);
+
+        if (this.filterValue2 !== undefined) {
+          this.filterValue2 = undefined;
+        } else {
+          this.fetchData();
+        }
+      },
+      filterValue2() {
+        this.fetchData();
       }
     },
     mounted() {
@@ -117,14 +126,17 @@
     },
     methods: {
       async fetchData() {
-        console.log("Fetching...");
+        const that = this;
+        console.log(`Fetching for ${that.filterValue1}-${that.filterValue2}...`);
         let statData = {};
         this.stats = "";
         this.dates = [];
         this.percentages = [];
-        const that = this;
         const db = firebase.firestore();
-        const keyFiguresRef = db.collection("DayKeyFigures");
+        const hasFilter1 = that.filterValue1 !== undefined;
+        const hasFilter2 = that.filterValue2 !== undefined;
+        const hasFilter = hasFilter1 || hasFilter2;
+        const keyFiguresRef = db.collection(hasFilter ? "KeyFigures" : "DayKeyFigures");
         let dayOffset = 0;
         let maxDayOffset = 5; // only allow a maximum of 5 days to be found
 
@@ -133,51 +145,64 @@
           date = date.subtract(dayOffset, "days");
           const dateString = date.format("YYYY-MM-DD");
           let foundDay = false;
+          let query = keyFiguresRef.where("dateString", "==", dateString);
 
-          await keyFiguresRef.where("dateString", "==", dateString).get().then((querySnapshot) => {
-            // there should only be one doc for that day
+          if (hasFilter1) {
+            query = query.where("orgEntity", "==", that.filterValue1);
+          }
+
+          if (hasFilter2) {
+            query = query.where("subOrgEntity", "==", that.filterValue2);
+          }
+
+          await query.get().then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
               if (!foundDay) {
                 maxDayOffset--;
                 foundDay = true;
               }
 
-              // if (statData[dateString] === undefined) {
-              //   statData[dateString] = {
-              //     "date": date,
-              //     "dateFormatted": date.format("DD.MM"),
-              //     "bedsFull": 0,
-              //     "bedsEmpty": 0,
-              //     "bedsTotal": 0
-              //   };
-              // }
-
               const data = doc.data();
-              // statData[dateString].bedsFull += data.bedsFull;
-              // statData[dateString].bedsEmpty += data.bedsEmpty;
-              // statData[dateString].bedsTotal += data.bedsTotal;
-
               const dateFormatted = date.format("DD.MM");
-              const bedsPercent = data.bedsFull * 100 / data.bedsTotal;
-              statData[dateString] = {
-                "date": date,
-                "dateFormatted": dateFormatted,
-                "bedsFull": data.bedsFull,
-                "bedsEmpty": data.bedsEmpty,
-                "bedsTotal": data.bedsTotal,
-                "bedsPercent": bedsPercent
-              }
 
-              that.dates.push(dateFormatted);
-              that.percentages.push(bedsPercent);
+              if (hasFilter) {
+                if (statData[dateString] === undefined) {
+                  statData[dateString] = {
+                    "date": date,
+                    "dateFormatted": dateFormatted,
+                    "bedsFull": 0,
+                    "bedsEmpty": 0,
+                    "bedsTotal": 0
+                  };
+                }
+
+                statData[dateString].bedsFull += data.bedsFull;
+                statData[dateString].bedsEmpty += data.bedsEmpty;
+                statData[dateString].bedsTotal += data.bedsTotal;
+              } else {
+                const bedsPercent = data.bedsFull * 100 / data.bedsTotal;
+                statData[dateString] = {
+                  "date": date,
+                  "dateFormatted": dateFormatted,
+                  "bedsFull": data.bedsFull,
+                  "bedsEmpty": data.bedsEmpty,
+                  "bedsTotal": data.bedsTotal,
+                  "bedsPercent": bedsPercent
+                }
+
+                that.dates.push(dateFormatted);
+                that.percentages.push(bedsPercent);
+              }
             });
           });
 
-          // if (statData[dateString] !== undefined) {
-          //   statData[dateString].bedsPercent = statData[dateString].bedsFull * 100 / statData[dateString].bedsTotal;
-          //   that.dates.push(statData[dateString].dateFormatted);
-          //   that.percentages.push(statData[dateString].bedsPercent);
-          // }
+          if (hasFilter) {
+            if (statData[dateString] !== undefined) {
+              statData[dateString].bedsPercent = statData[dateString].bedsFull * 100 / statData[dateString].bedsTotal;
+              that.dates.push(statData[dateString].dateFormatted);
+              that.percentages.push(statData[dateString].bedsPercent);
+            }
+          }
 
           dayOffset++;
         } while (maxDayOffset > 0 && dayOffset < 100);

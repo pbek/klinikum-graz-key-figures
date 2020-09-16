@@ -12,8 +12,8 @@ export const getFilter1Mapping = () => {
     {"text": "Innere Medizin", "value": "MK"},
     {"text": "Neurochirurgie", "value": "NC"},
     {"text": "Neurologie", "value": "NK"},
-    {"text": "Ortho- Trauma", "value": "OR"},
-    {"text": "Ortho- Trauma", "value": "OT"},
+    // {"text": "Ortho- Trauma", "value": "OR"},
+    // {"text": "Ortho- Trauma", "value": "OT"},
     {"text": "Psychiatrie", "value": "PK"},
     {"text": "Strahlentherapie", "value": "ST"},
     {"text": "Unfallchirurgie", "value": "UC"},
@@ -31,8 +31,65 @@ export const getFilter2Mapping = (key) => {
       "AU",
     ],
     "CK": [
-      "CKAL", "CKGF",
-    ]
+      "CKAL", "CKGF", "CKGM", "CKHE", "CKPL", "CKTH", "CKTX",
+    ],
+    "DK": [
+      "DK",
+    ],
+    "FK": [
+      "FKGB", "FKAL",
+    ],
+    "HK": [
+      "HNO",
+    ],
+    "AK": [
+      "AKAL",
+    ],
+    "IN": [
+      "IN",
+    ],
+    "KC": [
+      "KCAL", "KCOR", "KCGM",
+    ],
+    "KK": [
+      "KKAL", "KKGM", "KKHO", "KKNE", "KKPU",
+    ],
+    "MK": [
+      "MKAN", "MKEN", "MKGE", "MKHM", "MKLU", "MKNE", "MKON", "MKRH", "MKGM",
+    ],
+    "ME": [
+      "MEDRADEG",
+    ],
+    "NC": [
+      "NC",
+    ],
+    "NK": [
+      "NKAL", "MKGM", "NKSP", "NKAL",
+    ],
+    "OR": [
+      "OR",
+    ],
+    "OT": [
+      "OT",
+    ],
+    "PK": [
+      "PK",
+    ],
+    "ST": [
+      "ST",
+    ],
+    "UC": [
+      "UC",
+    ],
+    "UK": [
+      "UK",
+    ],
+    "UP": [
+      "UP",
+    ],
+    "ZK": [
+      "ZKMK",
+    ],
   };
 
   return key === undefined ? [] : (data[key] || []);
