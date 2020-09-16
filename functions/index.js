@@ -175,7 +175,15 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
     const timeCol = worksheet.getColumn('F');
     const batch = db.batch();
     // console.log(`Reading worksheet ${worksheetName}`);
-    let dataList = [];
+    // let dataList = [];
+    // accumulated data for one full day over all orgEntities
+    let dataDay = {
+      bedsFull: 0,
+      bedsEmpty: 0,
+      bedsTotal: 0,
+      dateString: '',
+    };
+    let dateString = '';
 
     // beware of forEach in eachCell that doesn't work async!
     timeCol.eachCell((cell, rowNumber) => {
@@ -200,14 +208,15 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
       const date = row.getCell('E').value;
       // usually the date in cell E is a string
       let dateTime = moment(date + ' ' + time, 'DD-MM-YYYY hh:mm');
-      // sometime the date in cell E is a datetime
+      // sometimes the date in cell E is a datetime
       if (!dateTime.isValid()) {
         dateTime = moment(date);
       }
       // const timestamp = new admin.firestore.Timestamp(dateTime.unix(), 0);
       bedsFullValue = bedsFullValue.result || (Number.isInteger(bedsFullValue) ? bedsFullValue : 0);
       bedsEmptyValue = bedsEmptyValue.result || (Number.isInteger(bedsEmptyValue) ? bedsEmptyValue : 0);
-      const dateString = dateTime.format('YYYY-MM-DD').toString();
+      dateString = dateTime.format('YYYY-MM-DD').toString();
+      const bedsTotalValue = bedsFullValue + bedsEmptyValue;
 
       const data = {
         orgEntity: orgEntity,
@@ -215,19 +224,25 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
         subSubOrgEntity: subSubOrgEntity,
         bedsFull: bedsFullValue,
         bedsEmpty: bedsEmptyValue,
-        bedsTotal: bedsFullValue + bedsEmptyValue,
+        bedsTotal: bedsTotalValue,
         // dateTime: timestamp,
         dateString: dateString,
         // created: admin.firestore.FieldValue.serverTimestamp()
       };
+
+      // accumulate values for one whole day
+      dataDay.bedsFull += bedsFullValue;
+      dataDay.bedsEmpty += bedsEmptyValue;
+      dataDay.bedsTotal += bedsTotalValue;
     
+      // add KeyFigures document for one subSubOrgEntity for one day
       const docName = data.dateString + '-' + data.orgEntity + '-' + data.subOrgEntity + '-' + data.subSubOrgEntity;
       let docRef = db.collection('KeyFigures').doc(docName);
-      // await db.collection('KeyFigures').doc(docName).set(data);
-      
-      importCount++;
       batch.set(docRef, data);
-      dataList.push(`${worksheetName} ${rowNumber}`);
+      importCount++;
+
+      // await db.collection('KeyFigures').doc(docName).set(data);
+      // dataList.push(`${worksheetName} ${rowNumber}`);
       // dataList.push(data);
       // console.log(`Set worksheet ${worksheetName}, row ${rowNumber}`);
     });
@@ -249,7 +264,14 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
     //   return console.error(e);
     // });
 
+    // commit batch of KeyFigures documents for one day
     await batch.commit();
+
+    // commit DayKeyFigures document for one day
+    const docName = dateString;
+    dataDay.dateString = dateString;
+    await db.collection('DayKeyFigures').doc(docName).set(dataDay);
+
     console.log(`Imported worksheet ${worksheetName} of '${filePath}' with ${importCount} key figures`);
   });
 });

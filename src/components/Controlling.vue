@@ -81,6 +81,7 @@
 <script>
   import firebase from "firebase";
   import moment from "moment";
+  import * as utils from "../utils";
 
   export default {
     name: 'Controlling',
@@ -89,10 +90,7 @@
             stats: false,
             dates: [],
             percentages: [],
-            filter1: [
-              {"text" :"OE Fach 1", "value": "OE1"},
-              {"text" :"OE Fach 2", "value": "OE2"},
-            ],
+            filter1: utils.getFilter1Mapping(),
             filterValue1: "",
             filter2: [],
             filterValue2: "",
@@ -100,21 +98,8 @@
     },
     watch: {
       filterValue1(val) {
-        if (val === "OE1") {
-          this.filter2 = [
-              {"text" :"OE Sub Fach 1a", "value": "OE1a"},
-              {"text" :"OE Sub Fach 1b", "value": "OE1b"},
-            ]
-        } else if (val === "OE2") {
-          this.filter2 = [
-              {"text" :"OE Sub Fach 2a", "value": "OE2a"},
-              {"text" :"OE Sub Fach 2b", "value": "OE2b"},
-            ]
-        } else {
-          this.filter2 = []
-        }
-
-        this.filterValue2 = "";
+        // val is undefined if filter 1 isn't selected
+        this.filter2 = utils.getFilter2Mapping(val);
       }
     },
     mounted() {
@@ -139,7 +124,7 @@
         this.percentages = [];
         const that = this;
         const db = firebase.firestore();
-        const keyFiguresRef = db.collection("KeyFigures");
+        const keyFiguresRef = db.collection("DayKeyFigures");
         let dayOffset = 0;
         let maxDayOffset = 5; // only allow a maximum of 5 days to be found
 
@@ -150,40 +135,57 @@
           let foundDay = false;
 
           await keyFiguresRef.where("dateString", "==", dateString).get().then((querySnapshot) => {
+            // there should only be one doc for that day
             querySnapshot.forEach((doc) => {
               if (!foundDay) {
                 maxDayOffset--;
                 foundDay = true;
               }
 
-              if (statData[dateString] === undefined) {
-                statData[dateString] = {
-                  "date": date,
-                  "dateFormatted": date.format("DD.MM."),
-                  "bedsFull": 0,
-                  "bedsEmpty": 0,
-                  "bedsTotal": 0
-                };
-              }
+              // if (statData[dateString] === undefined) {
+              //   statData[dateString] = {
+              //     "date": date,
+              //     "dateFormatted": date.format("DD.MM"),
+              //     "bedsFull": 0,
+              //     "bedsEmpty": 0,
+              //     "bedsTotal": 0
+              //   };
+              // }
 
               const data = doc.data();
-              statData[dateString].bedsFull += data.bedsFull;
-              statData[dateString].bedsEmpty += data.bedsEmpty;
-              statData[dateString].bedsTotal += data.bedsTotal;
+              // statData[dateString].bedsFull += data.bedsFull;
+              // statData[dateString].bedsEmpty += data.bedsEmpty;
+              // statData[dateString].bedsTotal += data.bedsTotal;
+
+              const dateFormatted = date.format("DD.MM");
+              const bedsPercent = data.bedsFull * 100 / data.bedsTotal;
+              statData[dateString] = {
+                "date": date,
+                "dateFormatted": dateFormatted,
+                "bedsFull": data.bedsFull,
+                "bedsEmpty": data.bedsEmpty,
+                "bedsTotal": data.bedsTotal,
+                "bedsPercent": bedsPercent
+              }
+
+              that.dates.push(dateFormatted);
+              that.percentages.push(bedsPercent);
             });
           });
 
-          if (statData[dateString] !== undefined) {
-            statData[dateString].bedsPercent = statData[dateString].bedsFull * 100 / statData[dateString].bedsTotal;
-            that.dates.push(statData[dateString].dateFormatted);
-            that.percentages.push(statData[dateString].bedsPercent);
-          }
+          // if (statData[dateString] !== undefined) {
+          //   statData[dateString].bedsPercent = statData[dateString].bedsFull * 100 / statData[dateString].bedsTotal;
+          //   that.dates.push(statData[dateString].dateFormatted);
+          //   that.percentages.push(statData[dateString].bedsPercent);
+          // }
 
           dayOffset++;
         } while (maxDayOffset > 0 && dayOffset < 100);
 
         console.log(statData);
         this.stats = statData;
+        this.dates.reverse();
+        this.percentages.reverse();
       }
     }
   }
