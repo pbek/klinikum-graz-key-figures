@@ -163,13 +163,32 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.read(stream);
 
+  if (workbook.worksheets[0].getCell("A1").value === "AufnDatum") {
+    console.log("Importing admission data...")
+    await importAdmissionData(workbook, filePath);
+  } else if (workbook.worksheets[0].getCell("N1").value === "Betten Frei") {
+    console.log("Importing occupancy data...")
+    await importOccupancyData(workbook, filePath);
+  } else {
+    console.warning("No suitable XLSX found!")
+  }
+
+});
+
+// async function asyncArrayForEach(array, callback) {
+//   for (let index = 0; index < array.length; index++) {
+//       await callback(array[index], index, array);
+//   }
+// }
+
+async function asyncForEach(array, callback) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+}
+
+async function importOccupancyData(workbook, filePath) {
   await asyncForEach(workbook.worksheets, async worksheet => {
-  // await workbook.worksheets.forEach(async worksheet => {
-  // asyncArrayForEach(workbook.worksheets, worksheet => {
-  // const worksheets = await workbook.worksheets;
-  // console.log(worksheets.length);
-  // for (let index = 0; index < worksheets.length; index++) {
-  //   const worksheet = worksheets[index];
     const worksheetName = worksheet.name;
     let importCount = 0;
     const timeCol = worksheet.getColumn('F');
@@ -238,31 +257,9 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
       // add KeyFigures document for one subSubOrgEntity for one day
       const docName = data.dateString + '-' + data.orgEntity + '-' + data.subOrgEntity + '-' + data.subSubOrgEntity;
       let docRef = db.collection('KeyFigures').doc(docName);
-      batch.set(docRef, data);
+      batch.set(docRef, data, { merge: true });
       importCount++;
-
-      // await db.collection('KeyFigures').doc(docName).set(data);
-      // dataList.push(`${worksheetName} ${rowNumber}`);
-      // dataList.push(data);
-      // console.log(`Set worksheet ${worksheetName}, row ${rowNumber}`);
     });
-
-    // console.log(`Imported worksheet ${worksheetName} of '${filePath}' with ${importCount} key figures`);
-    // console.log(dataList.length, dataList);
-
-    // for (let index = 0; index < dataList.length; index++) {
-    //   const data = dataList[index];
-    //   const docName = data.dateString + '-' + data.orgEntity + '-' + data.subOrgEntity + '-' + data.subSubOrgEntity;
-    //   // await db.collection('KeyFigures').doc(docName).set(data);
-    //   let docRef = db.collection('KeyFigures').doc(docName);
-    //   batch.set(docRef, data);
-    // }
-  
-    // await batch.commit().then(() => {
-    //   return console.log(`Imported worksheet ${worksheetName} of '${filePath}' with ${importCount} key figures`);
-    // }).catch((e) => {
-    //   return console.error(e);
-    // });
 
     // commit batch of KeyFigures documents for one day
     await batch.commit();
@@ -270,20 +267,89 @@ exports.importKeyFigures = functions.storage.object().onFinalize(async (object) 
     // commit DayKeyFigures document for one day
     const docName = dateString;
     dataDay.dateString = dateString;
-    await db.collection('DayKeyFigures').doc(docName).set(dataDay);
+    await db.collection('DayKeyFigures').doc(docName).set(dataDay, { merge: true });
 
-    console.log(`Imported worksheet ${worksheetName} of '${filePath}' with ${importCount} key figures`);
+    console.log(`Imported occupancy worksheet ${worksheetName} of '${filePath}' with ${importCount} key figures`);
   });
-});
+}
 
-// async function asyncArrayForEach(array, callback) {
-//   for (let index = 0; index < array.length; index++) {
-//       await callback(array[index], index, array);
-//   }
-// }
+async function importAdmissionData(workbook, filePath) {
+  await asyncForEach(workbook.worksheets, async worksheet => {
+    const worksheetName = worksheet.name;
+    let importCount = 0;
+    const dateCol = worksheet.getColumn('A');
+    // console.log(`Reading worksheet ${worksheetName}`);
+    // let dataList = [];
+    // accumulated data for one full day over all orgEntities
+    let dataDay = {
+      occupancies: 0,
+      dateString: '',
+    };
+    let dateString = '';
+    let dataItems = {};
 
-async function asyncForEach(array, callback) {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
+    // beware of forEach in eachCell that doesn't work async!
+    dateCol.eachCell((cell, rowNumber) => {
+      if (rowNumber === 1) {
+        return;
+      }
+
+      const row = worksheet.getRow(rowNumber);
+      const orgEntity = row.getCell('E').value;
+      const subOrgEntity = row.getCell('G').value;
+      const subSubOrgEntity = row.getCell('H').value;
+      const date = row.getCell('A').value;
+      // usually the date in cell A is a string
+      let dateTime = moment(date, 'MM/DD/YYYY');
+      // sometimes the date in cell A is a datetime
+      if (!dateTime.isValid()) {
+        dateTime = moment(date);
+      }
+      // const timestamp = new admin.firestore.Timestamp(dateTime.unix(), 0);
+      dateString = dateTime.format('YYYY-MM-DD').toString();
+
+      const docName = dateString + '-' + orgEntity + '-' + subOrgEntity + '-' + subSubOrgEntity;
+      console.log(docName);
+      if (dataItems[docName] === undefined) {
+        dataItems[docName] = {
+          orgEntity: orgEntity,
+          subOrgEntity: subOrgEntity,
+          subSubOrgEntity: subSubOrgEntity,
+          dateString: dateString,
+          occupancies: 0
+        }
+      }
+
+      // accumulate values for one whole day
+      dataDay.occupancies++;
+
+      // accumulate values for one item
+      dataItems[docName].occupancies++;
+    
+      // add KeyFigures document for one subSubOrgEntity for one day
+      importCount++;
+    });
+
+    const batch = db.batch();
+    const docNames = Object.keys(dataItems);
+
+    // print all keys
+    console.log(docNames);
+
+    // iterate over object
+    docNames.forEach((docName) => {
+      let docRef = db.collection('KeyFigures').doc(docName);
+      batch.set(docRef, dataItems[docName], { merge: true });
+    });
+
+    // commit batch of KeyFigures documents for one day
+    await batch.commit();
+
+    // commit DayKeyFigures document for one day
+    const docName = dateString;
+    dataDay.dateString = dateString;
+    await db.collection('DayKeyFigures').doc(docName).set(dataDay, { merge: true });
+
+    console.log(`Imported admission worksheet ${worksheetName} of '${filePath}' with ${importCount} key figures`);
+  });
 }
