@@ -282,7 +282,7 @@ async function importAdmissionData(workbook, filePath) {
     // let dataList = [];
     // accumulated data for one full day over all orgEntities
     let dataDay = {
-      occupancies: 0,
+      admissions: 0,
       dateString: '',
     };
     let dateString = '';
@@ -309,22 +309,22 @@ async function importAdmissionData(workbook, filePath) {
       dateString = dateTime.format('YYYY-MM-DD').toString();
 
       const docName = dateString + '-' + orgEntity + '-' + subOrgEntity + '-' + subSubOrgEntity;
-      console.log(docName);
+
       if (dataItems[docName] === undefined) {
         dataItems[docName] = {
           orgEntity: orgEntity,
           subOrgEntity: subOrgEntity,
           subSubOrgEntity: subSubOrgEntity,
           dateString: dateString,
-          occupancies: 0
+          admissions: 0
         }
       }
 
       // accumulate values for one whole day
-      dataDay.occupancies++;
+      dataDay.admissions++;
 
       // accumulate values for one item
-      dataItems[docName].occupancies++;
+      dataItems[docName].admissions++;
     
       // add KeyFigures document for one subSubOrgEntity for one day
       importCount++;
@@ -332,9 +332,6 @@ async function importAdmissionData(workbook, filePath) {
 
     const batch = db.batch();
     const docNames = Object.keys(dataItems);
-
-    // print all keys
-    console.log(docNames);
 
     // iterate over object
     docNames.forEach((docName) => {
