@@ -61,7 +61,47 @@
                 <v-col cols="12" style="max-width: 420px">
                   <v-sparkline
                     :labels="dates"
-                    :value="percentages"
+                    :value="occupancyPercentages"
+                    color="rgba(255, 255, 255, .7)"
+                    stroke-linecap="round"
+                    smooth
+                    auto-draw
+                    :gradient="['#f72047', '#ffd200', '#1feaea']"
+                  >
+                </v-sparkline>
+              </v-col>
+            </v-row>
+          </v-card>
+        </v-col>
+        <v-col cols="12">
+          <v-card>
+            <v-card-title class="subheading font-weight-bold">
+              Neuaufnahmen
+            </v-card-title>
+
+            <v-divider></v-divider>
+
+            <v-simple-table dense>
+              <template v-slot:default>
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th class="text-left">Neuaufnahmen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(dateBlock, date) in stats" v-bind:key="date">
+                    <td>{{ dateBlock.dateFormatted }}</td>
+                    <td>{{ dateBlock.admissions }}</td>
+                  </tr>
+                </tbody>
+              </template>
+              </v-simple-table>
+              <v-row align="center" justify="center">
+                <v-col cols="12" style="max-width: 420px">
+                  <v-sparkline
+                    :labels="dates"
+                    :value="admissionsItems"
                     color="rgba(255, 255, 255, .7)"
                     stroke-linecap="round"
                     smooth
@@ -89,7 +129,8 @@
         return {
             stats: false,
             dates: [],
-            percentages: [],
+            occupancyPercentages: [],
+            admissionsItems: [],
             filter1: utils.getFilter1Mapping(),
             filterValue1: undefined,
             filter2: [],
@@ -131,7 +172,8 @@
         let statData = {};
         this.stats = "";
         this.dates = [];
-        this.percentages = [];
+        this.occupancyPercentages = [];
+        this.admissionsItems = [];
         const db = firebase.firestore();
         const hasFilter1 = that.filterValue1 !== undefined;
         const hasFilter2 = that.filterValue2 !== undefined;
@@ -172,26 +214,30 @@
                     "dateFormatted": dateFormatted,
                     "bedsFull": 0,
                     "bedsEmpty": 0,
-                    "bedsTotal": 0
+                    "bedsTotal": 0,
+                    "admissions": 0,
                   };
                 }
 
-                statData[dateString].bedsFull += data.bedsFull;
-                statData[dateString].bedsEmpty += data.bedsEmpty;
-                statData[dateString].bedsTotal += data.bedsTotal;
+                statData[dateString].bedsFull += data.bedsFull || 0;
+                statData[dateString].bedsEmpty += data.bedsEmpty || 0;
+                statData[dateString].bedsTotal += data.bedsTotal || 0;
+                statData[dateString].admissions += data.admissions || 0;
               } else {
                 const bedsPercent = data.bedsFull * 100 / data.bedsTotal;
                 statData[dateString] = {
                   "date": date,
                   "dateFormatted": dateFormatted,
-                  "bedsFull": data.bedsFull,
-                  "bedsEmpty": data.bedsEmpty,
-                  "bedsTotal": data.bedsTotal,
-                  "bedsPercent": bedsPercent
+                  "bedsFull": data.bedsFull || 0,
+                  "bedsEmpty": data.bedsEmpty || 0,
+                  "bedsTotal": data.bedsTotal || 0,
+                  "bedsPercent": bedsPercent || 0,
+                  "admissions": data.admissions || 0,
                 }
 
                 that.dates.push(dateFormatted);
-                that.percentages.push(bedsPercent);
+                that.occupancyPercentages.push(bedsPercent);
+                that.admissionsItems.push(data.admissions || 0);
               }
             });
           });
@@ -200,7 +246,8 @@
             if (statData[dateString] !== undefined) {
               statData[dateString].bedsPercent = statData[dateString].bedsFull * 100 / statData[dateString].bedsTotal;
               that.dates.push(statData[dateString].dateFormatted);
-              that.percentages.push(statData[dateString].bedsPercent);
+              that.occupancyPercentages.push(statData[dateString].bedsPercent);
+              that.admissionsItems.push(statData[dateString].admissions);
             }
           }
 
@@ -210,7 +257,8 @@
         console.log(statData);
         this.stats = statData;
         this.dates.reverse();
-        this.percentages.reverse();
+        this.occupancyPercentages.reverse();
+        this.admissionsItems.reverse();
       }
     }
   }
