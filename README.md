@@ -2,6 +2,8 @@
 
 ![Node.js CI](https://github.com/pbek/kages-controlling/workflows/Node.js%20CI/badge.svg)
 
+![screenshot](screenshot.png)
+
 ## Project setup
 
 ### Install dev & build tools
