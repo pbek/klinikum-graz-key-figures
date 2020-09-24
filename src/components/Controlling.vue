@@ -76,7 +76,7 @@
         <v-col cols="12">
           <v-card>
             <v-card-title class="subheading font-weight-bold">
-              Neuaufnahmen
+              Aufnahmen
             </v-card-title>
 
             <v-divider></v-divider>
@@ -86,7 +86,7 @@
                 <thead>
                   <tr>
                     <th></th>
-                    <th class="text-left">Neuaufnahmen</th>
+                    <th class="text-left">Aufnahmen</th>
                   </tr>
                 </thead>
                 <tbody>
