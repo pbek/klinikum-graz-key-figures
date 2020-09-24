@@ -7,12 +7,11 @@
         </v-btn>
       </v-card-actions>
     </v-row> -->
-    <v-row>
-      <v-progress-linear
-        v-if="!stats"
-        indeterminate
-      ></v-progress-linear>
-      <template v-if="stats">
+    <v-skeleton-loader
+          :loading="!stats"
+          type="list-item,card@2"
+        >
+      <v-row>
         <v-col cols="6">
           <v-autocomplete
             label="Klinik"
@@ -113,8 +112,8 @@
             </v-row>
           </v-card>
         </v-col>
-      </template>
-    </v-row>
+      </v-row>
+    </v-skeleton-loader>
   </v-container>
 </template>
 
